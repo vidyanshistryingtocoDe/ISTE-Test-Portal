@@ -1,15 +1,3 @@
-/**
- * Real backend implementation of the API layer for the Spark (free)
- * plan: talks to Firestore directly with the client SDK. Every function
- * keeps the same name, arguments, and return shape as the original
- * placeholder in src/api/testApi.js, so Registration, Instructions, and
- * Test pages don't need any changes.
- *
- * All the enforcement this file relies on - one registration per roll
- * number, one submission per candidate, no reading other candidates'
- * data, no reading correct answers - lives in firestore.rules, not
- * here. See validation.js for why the checks in this file are UX only.
- */
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebaseClient.js';
 import { validateRegistration, validateSubmission } from './validation.js';
