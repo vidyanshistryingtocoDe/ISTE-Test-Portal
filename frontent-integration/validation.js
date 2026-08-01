@@ -1,13 +1,3 @@
-/**
- * This mirrors the checks in firestore.rules so the UI can show a
- * helpful inline error instead of a raw "permission-denied" from
- * Firestore. It is NOT the security boundary - a malicious client could
- * skip this file entirely and call Firestore directly, which is exactly
- * why firestore.rules repeats every one of these checks server-side.
- * Treat this file as a UX nicety layered on top of real enforcement,
- * never as a replacement for it.
- */
-
 const ALLOWED_BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'CE', 'OTHER'];
 const ID_PATTERN = /^[A-Z0-9-]{3,20}$/;
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
