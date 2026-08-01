@@ -1,27 +1,3 @@
-/**
- * One-time (or occasional) admin script that uploads the question bank
- * as TWO Firestore documents:
- *
- *   config/testConfig  - id, text, options only. This is the doc
- *                         candidates' browsers are allowed to read
- *                         (see firestore.rules).
- *   config/answerKey   - questionId -> correctAnswer map. Rules deny
- *                         read/write to everyone; only this script
- *                         (Admin SDK) and seed/gradeSubmissions.js ever
- *                         touch it.
- *
- * This script runs on YOUR machine with a service account key - it
- * never gets deployed to Firebase, so it doesn't need the Blaze plan.
- * Only *deploying compute* (Cloud Functions) needs Blaze; running the
- * Admin SDK locally against Firestore does not.
- *
- * Usage:
- *   1. Firebase console > Project settings > Service accounts >
- *      Generate new private key. Save as serviceAccountKey.json in this
- *      seed/ folder (already gitignored).
- *   2. npm install firebase-admin   (run inside this seed/ folder)
- *   3. GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json node seedConfig.js
- */
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
