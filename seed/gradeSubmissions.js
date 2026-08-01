@@ -1,26 +1,3 @@
-/**
- * Runs after the test window closes. Reads every response and the
- * private answer key (both only reachable via the Admin SDK, since
- * firestore.rules blocks all client access to them), computes each
- * candidate's score, and writes a CSV.
- *
- * This is where "correct answers never touch the client" pays off:
- * grading happens here, on your machine, using data no candidate's
- * browser was ever able to see - it's not a matter of trusting them not
- * to look, they structurally couldn't.
- *
- * Note this script also does its own sanitization pass: it only counts
- * an answer as correct if the stored value is exactly the letter the
- * answer key expects. Firestore rules validate the *shape* of a
- * response at write time (known fields, answers is a map) but can't
- * cheaply validate "every value is A/B/C/D" without hardcoding the
- * question list into the rules themselves - so any stray value here
- * simply won't match anything and counts as wrong, which is all the
- * protection this actually needs.
- *
- * Usage:
- *   GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json node gradeSubmissions.js
- */
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
