@@ -1,0 +1,93 @@
+rules_version = '2';
+
+/**
+ * On the Spark plan there is no Cloud Functions layer, so the frontend
+ * talks to Firestore directly using the client SDK. These rules are no
+ * longer a defense-in-depth backstop behind an API - they are the
+ * ENTIRE security boundary. Every check that used to live in
+ * functions/src/validation.js and functions/src/responses.js has been
+ * translated into rules language below.
+ *
+ * Three ideas carry all of the weight here:
+ *
+ * 1. Document IDs are validated with the same regex approach as before
+ *    (candidateId.matches(...)) - this is still what stands between a
+ *    roll number and a Firestore path-injection bug, see the earlier
+ *    explanation in validation.js from the Blaze version. The principle
+ *    doesn't change just because the check moved from JS to rules.
+ *
+ * 2. "Only ever CREATE, never UPDATE" replaces the old atomic
+ *    .create()/transaction logic. Firestore classifies a write as
+ *    create or update based on whether the document already existed -
+ *    denying `update` entirely on candidates/{id} and responses/{id}
+ *    means the first write wins and every subsequent write to the same
+ *    ID is rejected, with no race window, exactly like before.
+ *
+ * 3. Correct answers are never stored anywhere a client-readable rule
+ *    could expose them. config/answerKey has allow read, write: if
+ *    false unconditionally - the only way anything ever reads it is the
+ *    Admin SDK (seed/gradeSubmissions.js on your own machine), which
+ *    bypasses rules by design.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public test configuration: the question bank (WITHOUT correct
+    // answers - see config/answerKey) plus registration/test gating
+    // flags. Readable by any request carrying a valid App Check token;
+    // never writable by a client - only your local seed script touches
+    // this, via the Admin SDK.
+    match /config/testConfig {
+      allow read: if request.app != null;
+      allow write: if false;
+    }
+
+    // Correct answers. Never readable by any client, ever, under any
+    // condition - this is what keeps candidates from viewing answers
+    // via devtools no matter how the question bank is fetched.
+    match /config/answerKey {
+      allow read, write: if false;
+    }
+
+    match /candidates/{candidateId} {
+      allow create: if request.app != null
+        && candidateId.matches('^[A-Z0-9-]{3,20}$')
+        && request.resource.data.rollNumber == candidateId
+        && request.resource.data.keys().hasOnly(['name', 'rollNumber', 'email', 'branch', 'status', 'registeredAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 3
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.name.matches("^[A-Za-z .'-]+$")
+        && request.resource.data.email is string
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.branch in ['CSE', 'IT', 'ECE', 'EE', 'ME', 'CE', 'OTHER']
+        && request.resource.data.status == 'registered'
+        && get(/databases/$(database)/documents/config/testConfig).data.registrationOpen == true
+        && !exists(/databases/$(database)/documents/candidates/$(candidateId));
+
+      // No one - not even the candidate who wrote it - can read, edit,
+      // or delete a registration once created. Nothing in the frontend
+      // needs to read this back.
+      allow read, update, delete: if false;
+    }
+
+    match /responses/{candidateId} {
+      allow create: if request.app != null
+        && candidateId.matches('^[A-Z0-9-]{3,20}$')
+        && request.resource.data.candidateId == candidateId
+        && request.resource.data.keys().hasOnly(['candidateId', 'answers', 'submittedAt'])
+        && request.resource.data.answers is map
+        && exists(/databases/$(database)/documents/candidates/$(candidateId))
+        && get(/databases/$(database)/documents/config/testConfig).data.testOpen == true
+        && !exists(/databases/$(database)/documents/responses/$(candidateId));
+
+      // Same reasoning as candidates - one create, then permanently
+      // sealed. Grading reads happen offline via the Admin SDK.
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
