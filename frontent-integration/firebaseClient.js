@@ -11,10 +11,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// This is what request.app != null checks for in firestore.rules. Once
-// this is initialized and App Check enforcement is turned on for
-// Firestore in the console, every read/write below automatically
-// carries a verified token - no extra wiring needed per call.
 initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
   isTokenAutoRefreshEnabled: true,
