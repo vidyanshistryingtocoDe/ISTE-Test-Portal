@@ -1,0 +1,35 @@
+[
+  {
+    "id": "q1",
+    "text": "Which data structure uses LIFO (Last In, First Out) ordering?",
+    "options": {
+      "A": "Queue",
+      "B": "Stack",
+      "C": "Linked List",
+      "D": "Heap"
+    },
+    "correctAnswer": "B"
+  },
+  {
+    "id": "q2",
+    "text": "What does HTML stand for?",
+    "options": {
+      "A": "Hyper Trainer Marking Language",
+      "B": "Hyperlinks and Text Markup Language",
+      "C": "Hyper Text Markup Language",
+      "D": "Home Tool Markup Language"
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "id": "q3",
+    "text": "Which of these is NOT a programming paradigm?",
+    "options": {
+      "A": "Object-Oriented",
+      "B": "Functional",
+      "C": "Sequential Recursive",
+      "D": "Procedural"
+    },
+    "correctAnswer": "C"
+  }
+]
